@@ -1,0 +1,5 @@
+.idea
+vendor
+input.csv
+output.txt
+composer.lock

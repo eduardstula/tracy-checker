@@ -1,0 +1,16 @@
+{
+    "name": "eduard-stula/tracy-checker",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Eduard Štůla",
+            "email": "eduard.stula@b-m.cz"
+        }
+    ],
+    "require": {
+        "php": ">= 8.0",
+        "symfony/console": "^6.2"
+    },
+    "minimum-stability": "stable"
+}

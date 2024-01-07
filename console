@@ -1,0 +1,77 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+$application = new Application();
+
+$application->register('scan')
+    ->setCode(function (InputInterface $input, OutputInterface $output): int {
+
+        $output->writeln('');
+        $output->writeln('');
+
+        $inputCsv = __DIR__ . "/input.csv";
+        if (!file_exists($inputCsv)) {
+            $output->writeln('Input file not found: ' . $inputCsv);
+            return Command::FAILURE;
+        }
+
+        $outputFile = __DIR__ . "/output.txt";
+        if (file_exists($outputFile)) {
+            unlink($outputFile);
+        }
+        file_put_contents($outputFile, '');
+
+        $csv = file_get_contents($inputCsv);
+        $lines = explode("\n", $csv);
+        $pages = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (filter_var($line, FILTER_VALIDATE_URL) === false) {
+                continue;
+            }
+            $pages[] = $line;
+        }
+
+        $skipped = count($lines) - count($pages);
+        $progressBar = new ProgressBar($output, count($pages));
+        $progressBar->start();
+
+        foreach ($pages as $page) {
+            $html = @file_get_contents($page);
+            if ($html === false) {
+                $progressBar->advance();
+                $skipped++;
+                continue;
+            }
+
+            if (str_contains($html, 'Tracy')) {
+                file_put_contents($outputFile, $page . "\n", FILE_APPEND);
+            }
+
+            sleep(1);
+            $progressBar->advance();
+        }
+
+        $output->writeln('');
+        $output->writeln('');
+        $output->writeln('Scanned pages: ' . count($pages) - $skipped);
+        $output->writeln('Skipped pages: ' . $skipped);
+        $output->writeln('Tracy used: ' . count(file($outputFile)));
+        $output->writeln('');
+        $output->writeln('Output file with URLs: ' . $outputFile);
+        $output->writeln('');
+        $output->writeln('');
+
+
+        return Command::SUCCESS;
+    });
+
+$application->run();
